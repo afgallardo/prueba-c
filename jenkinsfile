@@ -1,0 +1,42 @@
+pipeline{
+    parameters{
+	choice(name:'nodo', choices:['principal','slave'], description:'seleccione el nodo')
+	choice(name:'environment', choices:['dev','cert','prod'], description:'seleccione el environment')
+ }
+    agent{label "${params.nodo}"}
+    stages{
+	stage('clonando el proyecto desde un repo remoto'){
+	    steps{
+		sh 'echo "clonando el proyecto desde un repo remoto"'
+		git url: 'https://github.com/afgallardo/prueba-c.git'
+	}}
+	stage('compilando codigo'){
+	    steps{
+		sh 'echo "compilando codigo"'
+		sh 'gcc fuente.c -o aplicacion.c'
+	}}
+	stage('probando aplicacion'){
+	    steps{
+		sh 'echo "probando aplicacion"'
+		sh './test.sh'
+	}}
+	stage('generando imagen de contenedor'){
+	    steps{
+		sh 'echo "generando imagen de contenedor"'
+		sh 'docker build -t lelele -f dockerfile .'
+		sh 'docker tag lelele devap/mipagina'
+		sh 'docker push devap/mipagina'
+	}}
+ }
+    post{
+	always{
+		sh 'echo "esto se ejecuta SIEMPRE"'
+	}
+	failure{
+		sh 'echo "esto se ejecuta ante un FALLO"'
+	}
+	success{
+		sh 'echo "esto se ejecuta ante un EXITO"'
+	}
+ }
+}
